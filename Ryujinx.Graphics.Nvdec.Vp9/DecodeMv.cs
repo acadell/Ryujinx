@@ -21,7 +21,7 @@ namespace Ryujinx.Graphics.Nvdec.Vp9
 
         private static PredictionMode ReadIntraModeY(ref Vp9Common cm, ref MacroBlockD xd, ref Reader r, int sizeGroup)
         {
-            PredictionMode yMode = ReadIntraMode(ref r, cm.Fc.Value.YModeProb[sizeGroup].AsSpan());
+            PredictionMode yMode = ReadIntraMode(ref r, cm.Fc.YModeProb[sizeGroup].AsSpan());
             if (!xd.Counts.IsNull)
             {
                 ++xd.Counts.Value.YMode[sizeGroup][(int)yMode];
@@ -32,7 +32,7 @@ namespace Ryujinx.Graphics.Nvdec.Vp9
 
         private static PredictionMode ReadIntraModeUv(ref Vp9Common cm, ref MacroBlockD xd, ref Reader r, byte yMode)
         {
-            PredictionMode uvMode = ReadIntraMode(ref r, cm.Fc.Value.UvModeProb[yMode].AsSpan());
+            PredictionMode uvMode = ReadIntraMode(ref r, cm.Fc.UvModeProb[yMode].AsSpan());
             if (!xd.Counts.IsNull)
             {
                 ++xd.Counts.Value.UvMode[yMode][(int)uvMode];
@@ -43,7 +43,7 @@ namespace Ryujinx.Graphics.Nvdec.Vp9
 
         private static PredictionMode ReadInterMode(ref Vp9Common cm, ref MacroBlockD xd, ref Reader r, int ctx)
         {
-            int mode = r.ReadTree(Luts.Vp9InterModeTree, cm.Fc.Value.InterModeProb[ctx].AsSpan());
+            int mode = r.ReadTree(Luts.Vp9InterModeTree, cm.Fc.InterModeProb[ctx].AsSpan());
             if (!xd.Counts.IsNull)
             {
                 ++xd.Counts.Value.InterMode[ctx][mode];
@@ -82,7 +82,7 @@ namespace Ryujinx.Graphics.Nvdec.Vp9
         private static TxSize ReadSelectedTxSize(ref Vp9Common cm, ref MacroBlockD xd, TxSize maxTxSize, ref Reader r)
         {
             int ctx = xd.GetTxSizeContext();
-            ReadOnlySpan<byte> txProbs = GetTxProbs(ref cm.Fc.Value, maxTxSize, ctx);
+            ReadOnlySpan<byte> txProbs = GetTxProbs(ref cm.Fc, maxTxSize, ctx);
             TxSize txSize = (TxSize)r.Read(txProbs[0]);
             if (txSize != TxSize.Tx4x4 && maxTxSize >= TxSize.Tx16x16)
             {
@@ -182,7 +182,7 @@ namespace Ryujinx.Graphics.Nvdec.Vp9
                 return 0;
             }
 
-            segmentId = ReadSegmentId(ref r, ref cm.Fc.Value.SegTreeProb);
+            segmentId = ReadSegmentId(ref r, ref cm.Fc.SegTreeProb);
             SetSegmentId(ref cm, miOffset, xMis, yMis, segmentId);
             return segmentId;
         }
@@ -218,13 +218,13 @@ namespace Ryujinx.Graphics.Nvdec.Vp9
 
             if (seg.TemporalUpdate)
             {
-                byte predProb = Segmentation.GetPredProbSegId(ref cm.Fc.Value.SegPredProb, ref xd);
+                byte predProb = Segmentation.GetPredProbSegId(ref cm.Fc.SegPredProb, ref xd);
                 mi.SegIdPredicted = (sbyte)r.Read(predProb);
-                segmentId = mi.SegIdPredicted != 0 ? predictedSegmentId : ReadSegmentId(ref r, ref cm.Fc.Value.SegTreeProb);
+                segmentId = mi.SegIdPredicted != 0 ? predictedSegmentId : ReadSegmentId(ref r, ref cm.Fc.SegTreeProb);
             }
             else
             {
-                segmentId = ReadSegmentId(ref r, ref cm.Fc.Value.SegTreeProb);
+                segmentId = ReadSegmentId(ref r, ref cm.Fc.SegTreeProb);
             }
             SetSegmentId(ref cm, miOffset, xMis, yMis, segmentId);
             return segmentId;
@@ -239,7 +239,7 @@ namespace Ryujinx.Graphics.Nvdec.Vp9
             else
             {
                 int ctx = xd.GetSkipContext();
-                int skip = r.Read(cm.Fc.Value.SkipProb[ctx]);
+                int skip = r.Read(cm.Fc.SkipProb[ctx]);
                 if (!xd.Counts.IsNull)
                 {
                     ++xd.Counts.Value.Skip[ctx][skip];
@@ -320,7 +320,7 @@ namespace Ryujinx.Graphics.Nvdec.Vp9
             if (cm.ReferenceMode == ReferenceMode.ReferenceModeSelect)
             {
                 int ctx = PredCommon.GetReferenceModeContext(ref cm, ref xd);
-                ReferenceMode mode = (ReferenceMode)r.Read(cm.Fc.Value.CompInterProb[ctx]);
+                ReferenceMode mode = (ReferenceMode)r.Read(cm.Fc.CompInterProb[ctx]);
                 if (!xd.Counts.IsNull)
                 {
                     ++xd.Counts.Value.CompInter[ctx][(int)mode];
@@ -342,7 +342,7 @@ namespace Ryujinx.Graphics.Nvdec.Vp9
             int segmentId,
             ref Array2<sbyte> refFrame)
         {
-            ref Vp9EntropyProbs fc = ref cm.Fc.Value;
+            ref Vp9EntropyProbs fc = ref cm.Fc;
 
             if (cm.Seg.IsSegFeatureActive(segmentId, SegLvlFeatures.SegLvlRefFrame) != 0)
             {
@@ -402,7 +402,7 @@ namespace Ryujinx.Graphics.Nvdec.Vp9
         private static byte ReadSwitchableInterpFilter(ref Vp9Common cm, ref MacroBlockD xd, ref Reader r)
         {
             int ctx = xd.GetPredContextSwitchableInterp();
-            byte type = (byte)r.ReadTree(Luts.Vp9SwitchableInterpTree, cm.Fc.Value.SwitchableInterpProb[ctx].AsSpan());
+            byte type = (byte)r.ReadTree(Luts.Vp9SwitchableInterpTree, cm.Fc.SwitchableInterpProb[ctx].AsSpan());
             if (!xd.Counts.IsNull)
             {
                 ++xd.Counts.Value.SwitchableInterp[ctx][type];
@@ -487,7 +487,7 @@ namespace Ryujinx.Graphics.Nvdec.Vp9
                     {
                         for (i = 0; i < 1 + isCompound; ++i)
                         {
-                            ReadMv(ref r, ref mv[i], ref refMv[i], ref cm.Fc.Value, xd.Counts, allowHP);
+                            ReadMv(ref r, ref mv[i], ref refMv[i], ref cm.Fc, xd.Counts, allowHP);
                             ret = ret && IsMvValid(ref mv[i]);
                         }
                         break;
@@ -517,7 +517,7 @@ namespace Ryujinx.Graphics.Nvdec.Vp9
             else
             {
                 int ctx = xd.GetIntraInterContext();
-                bool isInter = r.Read(cm.Fc.Value.IntraInterProb[ctx]) != 0;
+                bool isInter = r.Read(cm.Fc.IntraInterProb[ctx]) != 0;
                 if (!xd.Counts.IsNull)
                 {
                     ++xd.Counts.Value.IntraInter[ctx][isInter ? 1 : 0];
@@ -1091,29 +1091,29 @@ namespace Ryujinx.Graphics.Nvdec.Vp9
                     for (i = 0; i < 4; ++i)
                     {
                         mi.Value.Bmi[i].Mode =
-                            ReadIntraMode(ref r, GetYModeProbs(ref cm.Fc.Value, mi, aboveMi, leftMi, i));
+                            ReadIntraMode(ref r, GetYModeProbs(ref cm.Fc, mi, aboveMi, leftMi, i));
                     }
 
                     mi.Value.Mode = mi.Value.Bmi[3].Mode;
                     break;
                 case BlockSize.Block4x8:
                     mi.Value.Bmi[0].Mode = mi.Value.Bmi[2].Mode =
-                        ReadIntraMode(ref r, GetYModeProbs(ref cm.Fc.Value, mi, aboveMi, leftMi, 0));
+                        ReadIntraMode(ref r, GetYModeProbs(ref cm.Fc, mi, aboveMi, leftMi, 0));
                     mi.Value.Bmi[1].Mode = mi.Value.Bmi[3].Mode = mi.Value.Mode =
-                        ReadIntraMode(ref r, GetYModeProbs(ref cm.Fc.Value, mi, aboveMi, leftMi, 1));
+                        ReadIntraMode(ref r, GetYModeProbs(ref cm.Fc, mi, aboveMi, leftMi, 1));
                     break;
                 case BlockSize.Block8x4:
                     mi.Value.Bmi[0].Mode = mi.Value.Bmi[1].Mode =
-                        ReadIntraMode(ref r, GetYModeProbs(ref cm.Fc.Value, mi, aboveMi, leftMi, 0));
+                        ReadIntraMode(ref r, GetYModeProbs(ref cm.Fc, mi, aboveMi, leftMi, 0));
                     mi.Value.Bmi[2].Mode = mi.Value.Bmi[3].Mode = mi.Value.Mode =
-                        ReadIntraMode(ref r, GetYModeProbs(ref cm.Fc.Value, mi, aboveMi, leftMi, 2));
+                        ReadIntraMode(ref r, GetYModeProbs(ref cm.Fc, mi, aboveMi, leftMi, 2));
                     break;
                 default:
-                    mi.Value.Mode = ReadIntraMode(ref r, GetYModeProbs(ref cm.Fc.Value, mi, aboveMi, leftMi, 0));
+                    mi.Value.Mode = ReadIntraMode(ref r, GetYModeProbs(ref cm.Fc, mi, aboveMi, leftMi, 0));
                     break;
             }
 
-            mi.Value.UvMode = ReadIntraMode(ref r, cm.Fc.Value.KfUvModeProb[(int)mi.Value.Mode].AsSpan());
+            mi.Value.UvMode = ReadIntraMode(ref r, cm.Fc.KfUvModeProb[(int)mi.Value.Mode].AsSpan());
         }
 
         private static void CopyRefFramePair(ref Array2<sbyte> dst, ref Array2<sbyte> src)

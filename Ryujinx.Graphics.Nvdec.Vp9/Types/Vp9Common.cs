@@ -80,7 +80,7 @@ namespace Ryujinx.Graphics.Nvdec.Vp9.Types
         public Array2<sbyte> CompVarRef;
         public ReferenceMode ReferenceMode;
 
-        public Ptr<Vp9EntropyProbs> Fc;
+        public Vp9EntropyProbs Fc;
         public Ptr<Vp9BackwardUpdates> Counts;
 
         public int Log2TileCols, Log2TileRows;
@@ -260,8 +260,8 @@ namespace Ryujinx.Graphics.Nvdec.Vp9.Types
         private void SetPartitionProbs(ref MacroBlockD xd)
         {
             xd.PartitionProbs = FrameIsIntraOnly()
-                ? new ArrayPtr<Array3<byte>>(ref Fc.Value.KfPartitionProb[0], 16)
-                : new ArrayPtr<Array3<byte>>(ref Fc.Value.PartitionProb[0], 16);
+                ? new ArrayPtr<Array3<byte>>(ref Fc.KfPartitionProb[0], 16)
+                : new ArrayPtr<Array3<byte>>(ref Fc.PartitionProb[0], 16);
         }
 
         internal void InitMacroBlockD(ref MacroBlockD xd, ArrayPtr<int> dqcoeff)
@@ -281,7 +281,7 @@ namespace Ryujinx.Graphics.Nvdec.Vp9.Types
                 {
                     MemoryUtil.Copy(ref xd.Plane[i].SegDequant, ref UvDequant);
                 }
-                xd.Fc = new Ptr<Vp9EntropyProbs>(ref Fc.Value);
+                xd.Fc = Fc;
             }
 
             xd.AboveSegContext = AboveSegContext;

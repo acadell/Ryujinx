@@ -52,7 +52,7 @@ namespace Ryujinx.Graphics.Nvdec.Vp9
         {
             ref Vp9BackwardUpdates counts = ref xd.Counts.Value;
             int maxEob = 16 << ((int)txSize << 1);
-            ref Vp9EntropyProbs fc = ref xd.Fc.Value;
+            ref Vp9EntropyProbs fc = ref xd.Fc;
             int refr = xd.Mi[0].Value.IsInterBlock() ? 1 : 0;
             int band, c = 0;
             ref Array6<Array6<Array3<byte>>> coefProbs = ref fc.CoefProbs[(int)txSize][(int)type][refr];

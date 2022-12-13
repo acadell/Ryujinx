@@ -32,7 +32,7 @@ namespace Ryujinx.Graphics.Nvdec.Vp9.Types
         public int MbToTopEdge;
         public int MbToBottomEdge;
 
-        public Ptr<Vp9EntropyProbs> Fc;
+        public Vp9EntropyProbs Fc;
 
         /* pointers to reference frames */
         public Array2<Ptr<RefBuffer>> BlockRefs;

@@ -82,7 +82,7 @@ namespace Ryujinx.Graphics.Nvdec.Vp9
             cm.Lf.RefDeltas = pictureInfo.RefDeltas;
             cm.Lf.ModeDeltas = pictureInfo.ModeDeltas;
 
-            cm.Fc = new Ptr<Vp9EntropyProbs>(ref pictureInfo.Entropy);
+            cm.Fc = pictureInfo.Entropy;
             cm.Counts = new Ptr<Vp9BackwardUpdates>(ref pictureInfo.BackwardUpdateCounts);
 
             cm.FrameRefs[0].Buf = (Surface)pictureInfo.LastReference;
